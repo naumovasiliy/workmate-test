@@ -1,7 +1,8 @@
 import pytest
-from pygments.style import ansicolors
-
 from main import *
+
+def test_create_parser():
+    assert create_parser()
 
 def test_create_where_cond():
     assert create_where_cond('fieldname<123') == ('fieldname', '<', '123')
@@ -10,21 +11,25 @@ def test_create_where_cond():
 def test_create_where_cond_fail():
     assert create_where_cond('fieldname<<123') == ('fieldname', '<', '123')
 
-def test_check_row():
-    test_row = ['Vasiliy', 'Naumov', '29', '173']
-    test_where = (3, '>', 170)
-    assert check_row(test_row, test_where)
+@pytest.mark.parametrize('x',
+                         [(3, '>', 170), (3, '<', 180), (3, '=', 173),
+                          (0, '=', 'Vasiliy'),
+                          ()])
+def test_check_row(x):
+    test_row = create_test_row()
+    assert check_row(test_row, x)
 
 @pytest.mark.xfail(raises=CSVReaderError)
 def test_check_row_fail():
-    test_row = ['Vasiliy', 'Naumov', '29', '173']
+    test_row = create_test_row()
     test_where = (3, '=', 'Высокий')
     assert  check_row(test_row, test_where)
 
-def test_aggregate_csv():
+@pytest.mark.parametrize('x', ['age=avg', 'height=min', 'age=max'])
+def test_aggregate_csv(x):
     table = create_test_table()
     fieldnames = create_test_fieldnames()
-    assert aggregate_csv([fieldnames] + table, 'age=avg')
+    assert aggregate_csv([fieldnames] + table, x)
 
 @pytest.mark.xfail(raises=CSVReaderError)
 @pytest.mark.parametrize('x', ['age=median', 'name=avg', 'weight=min'])
@@ -55,3 +60,6 @@ def create_test_table():
 
 def create_test_fieldnames():
     return ['name', 'surname', 'age', 'height']
+
+def create_test_row():
+    return ['Vasiliy', 'Naumov', '29', '173']
